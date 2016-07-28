@@ -6,11 +6,11 @@ This can be useful for including e.g. images, audio or shader files directly int
 platform independent way.
 
 To use it, just build bintoheader.cpp with a C++11 compiler (Should work with GCC 5/6, Clang and
-MSVC 2013/2015. Only tested on GCC 5/6 and clang). You can also simply use the provided makefile to
-build (make), install ([sudo] make install) or clean (make clean) it.
-
+MSVC 2013/2015. Only tested on GCC 5/6). 
+You can also simply use the provided makefile to build (make), install ([sudo] make install) or clean (make clean) it.
 To configure compiler or install path just change the makefile, it is not that scary (13 lines
 actually).
+Note that getting it to compile with clang might require some extra include and link flags depending on the clang installation.
 
 ## Usage:
 
