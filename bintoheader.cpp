@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <cstring>
 
+#include "cxxopts.hpp"
+
 //beginning of the file to output
 constexpr auto fileTemplate = 1 + R"SRC(
 #ifndef BINARY_DATA_HEADER_INCLUDE
@@ -20,7 +22,7 @@ constexpr auto fileTemplate = 1 + R"SRC(
 	const
 #endif
 
-%t binaryData[] = {
+%t %n[] = {
 	%d
 };
 
@@ -51,39 +53,56 @@ std::string parseFileName(const std::string& name)
 	else ++pos2;
 
 	auto ret = name.substr(std::max(pos1, pos2)); 
-	std::cout << "outputting to " << ret << "\n";
 	return ret;
 }
 
-std::vector<std::uint8_t> loadFile(const char* name)
+std::vector<std::uint8_t> loadFile(const std::string& file)
 {
-	const static std::string errorMsg1 = " loadFile: couldnt open file ";
-	const static std::string errorMsg2 = " loadFile: failed to read file ";
-
 	auto openmode = std::ios::ate | std::ios::binary;
 
-	std::ifstream ifs(name, openmode);
-	if(!ifs.is_open()) throw std::runtime_error(std::strerror(errno) + errorMsg1 + name);
+	std::ifstream ifs(file, openmode);
+	if(!ifs.is_open()) 
+	{
+		std::cerr << "loadFile: couldnt open input file " << file << "\n";
+		std::cerr << "error: " << std::strerror(errno) << "\n";
+		exit(EXIT_FAILURE);
+	}
 
 	auto size = ifs.tellg();
 	ifs.seekg(0, std::ios::beg);
 
 	std::vector<std::uint8_t> buffer(size);
 	auto data = reinterpret_cast<char*>(buffer.data());
-	if(!ifs.read(data, size)) throw std::runtime_error(std::strerror(errno) + errorMsg2 + name);
+	if(!ifs.read(data, size)) 
+	{
+		std::cerr << "loadFile: failed to read input file " << file << "\n";
+		std::cerr << "error: " << std::strerror(errno) << "\n";
+		exit(EXIT_FAILURE);
+	}
 
 	return buffer;
 }
 
-void outputData(const std::vector<std::uint8_t>& data, const char* name, int size)
+void outputData(const std::vector<std::uint8_t>& data, const std::string& file, 
+	const std::string& name, int size)
 {
-	auto fname = parseFileName(std::string(name) + ".h");
+	auto fname = parseFileName(file);
 	std::ofstream ofs(fname);
-	if(!ofs.is_open()) throw std::runtime_error("Couldnt open output file " + fname);
+	if(!ofs.is_open()) 
+	{
+		std::cerr << "outputData: couldnt open output file " << file << "\n";
+		std::cerr << "error: " << std::strerror(errno) << "\n";
+		exit(EXIT_FAILURE);
+	}
 
 	auto byteSize = size / 8;
 	if(data.size() % byteSize) 
-		throw std::runtime_error("File size doesnt match outputType");
+	{
+		std::cerr << "outputData: file size is not a multiple of specified integer size\n";
+		std::cerr << "\tfile size: " << data.size() << " bytes\n";
+		std::cerr << "\tspecified size: " << size / 8 << " bytes\n";
+		exit(EXIT_FAILURE);
+	}
 
 	std::string dataString;
 	dataString.reserve(data.size() * 5); //approx.
@@ -115,108 +134,63 @@ void outputData(const std::vector<std::uint8_t>& data, const char* name, int siz
 	std::string txt = fileTemplate;
 	replace(txt, "%t", outputTypeName);
 	replace(txt, "%d", dataString);
+	replace(txt, "%n", name);
 
 	ofs << txt;
 }
 
-void printUsage()
-{
-	std::cerr << "Usage: bintoheader <file> [<file> ...] [-s{8|16|32|64} = 8]\n";
-	std::cerr << "-s\tSpecifies the size of the output data array in bits (Default = 8).\n";
-	std::cerr << "\tWill fail if the file size is not a multiple of the specified size\n";
-}
-
-
 int main(int argc, char** argv)
 {
-	if(argc < 2)
-	{
-		printUsage();
-		return EXIT_FAILURE;
-	}
+	//parse args
+	std::string input;
+	std::string output;
+	std::string name = "binaryData";
+	unsigned int size = 8;
 
-	std::uint8_t size = 8;
-	int nextSize = 0;
-	int nextSizeArg = 0;
-	int sizeArg = 0;
-	for(auto i = 1; i < argc; ++i)
+	try
 	{
-		if(std::strncmp(argv[i], "-s", 2) == 0)
+		cxxopts::Options options("bintoheader", "Program to convert files into C headers");
+
+		options.add_options()
+			("i,input", "the input file. Can be any type of file, binary as well as text",
+				cxxopts::value<std::string>(input))
+			("o,output", "the output file. By default the input flie name with a '.h' suffix", 
+				cxxopts::value<std::string>(output))
+			("s,size", "the byte size of the array {8|16|32|64}. Defaulted to 8. Will fail if "
+				"file size is not multiple.", cxxopts::value<unsigned int>(size))
+			("n,name", "the name of the array in the c header. Defaulted to 'binaryData'", 
+				cxxopts::value<std::string>(name))
+			("h,help", "Print this help string");
+
+		options.parse(argc, argv);
+		if(options.count("help"))
 		{
-			if(nextSize > 0)
-			{
-				std::cerr << "Two size parameters given\n";
-				printUsage();
-				return EXIT_FAILURE;
-			}
-
-			if(std::strlen(argv[i]) > 2)
-			{
-				try
-				{
-					size = std::stoi(argv[i] + 2);
-				}
-				catch(...)
-				{
-					std::cerr << "Invalid size parameter given.\n";
-					printUsage();
-					return EXIT_FAILURE;
-				}
-				nextSize = 2;
-				nextSizeArg = i;
-				sizeArg = i;
-				continue;
-			}
-			else
-			{
-				nextSizeArg = i;
-				nextSize = 1;
-				continue;
-			}
+			std::cerr << options.help({""}) << "\n";
+			return EXIT_SUCCESS;
+		}
+		
+		if(options.count("input") != 1)
+		{
+			std::cerr << "Invalid usage.\n" << options.help({""}) << "\n";
+			return EXIT_FAILURE;
 		}
 
-		if(nextSize == 1)
+		if(!(size == 8 || size == 16 || size == 32 || size == 64))
 		{
-			try
-			{
-				size = std::stoi(argv[i]);
-			}
-			catch(...)
-			{
-				std::cerr << "Invalid size parameter given.\n";
-				printUsage();
-				return EXIT_FAILURE;
-			}
-
-			nextSize = 2;
-			sizeArg = i;
-			continue;
+			std::cerr << "Invalid size paramter.\n";
+			return EXIT_FAILURE;
 		}
-	}
 
-	if(!(size == 8 || size == 16 || size == 32 || size == 64))
+		if(!options.count("output")) output = input + ".h";
+		replace(name, ".", "_");
+	} 
+	catch(const cxxopts::OptionException& e)
 	{
-		std::cerr << "Invalid size paramter.\n";
-		printUsage();
-		return EXIT_FAILURE;
+		std::cerr << "Could not parse given arguments\n";
+			return EXIT_FAILURE;
 	}
 
-	auto fileCount = 0u;
-	for(auto i = 1; i < argc; ++i)
-	{
-		if(i == sizeArg || i == nextSizeArg) continue;
-		auto file = argv[i];
-		auto data = loadFile(file);
-		outputData(data, file, size);
-
-		std::cout << "Succesfully parsed " << file << ". " << data.size () << " bytes\n";
-		++fileCount;
-	}
-
-	if(!fileCount)
-	{
-		std::cerr << "Error: no input files given\n";
-		printUsage();
-		return EXIT_FAILURE;
-	}
+	auto data = loadFile(input);
+	outputData(data, output, name, size);
+	std::cout << "Succesfully parsed " << name << ". " << data.size () << " bytes\n";
 }

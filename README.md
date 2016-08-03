@@ -15,15 +15,21 @@ Note that getting it to compile with clang might require some extra include and 
 ## Usage:
 
 ``````````````````````````````
-bintoheader <file> [<file> ...] [-s {8|16|32|64}]
+  bintoheader [OPTION...]
 
--s		Defines the size of the integers the data array in the header will consist of in bits.
-		Can only be one of {8|16|32|64}. Command fails if the file size is not a multiple of the
-		matching byte size (e.g. if -s32 is given the file size in bytes must be a multiple of 4).
-		Defaulted to 8.
+  -i, --input arg   the input file. Can be any type of file, binary as well
+                    as text
+  -o, --output arg  the output file. By default the input flie name with a
+                    '.h' suffix
+  -s, --size arg    the byte size of the array {8|16|32|64}. Defaulted to 8.
+                    Will fail if file size is not multiple.
+  -n, --name arg    the name of the array in the c header. Defaulted to
+                    'binaryData'
+  -h, --help        Print this help string
 ````````````````````````````
 
-This will convert the file <file> into the valid header <file>.h.
+This will convert the input file into the valid C header specified by the output argument that 
+contains an array with the raw data of the input file.
 The header can then be used with C++ (for C++11 and later it will define a constexpr array) or
 with C99, in which case it will simply define a constant array.
 
