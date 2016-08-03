@@ -10,8 +10,8 @@
 
 //beginning of the file to output
 constexpr auto fileTemplate = 1 + R"SRC(
-#ifndef BINARY_DATA_HEADER_INCLUDE
-#define BINARY_DATA_HEADER_INCLUDE
+#ifndef BINARY_%i_HEADER_INCLUDE
+#define BINARY_%i_HEADER_INCLUDE
 
 #include <stdint.h>
 
@@ -130,11 +130,14 @@ void outputData(const std::vector<std::uint8_t>& data, const std::string& file,
 	}
 
 	std::string outputTypeName = "uint" + std::to_string(size) + "_t";
+	std::string includeGuard = name;
+	for(auto& ch : includeGuard) ch = std::toupper(ch);
 
 	std::string txt = fileTemplate;
 	replace(txt, "%t", outputTypeName);
 	replace(txt, "%d", dataString);
 	replace(txt, "%n", name);
+	replace(txt, "%i", includeGuard);
 
 	ofs << txt;
 }
