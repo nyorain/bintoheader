@@ -1,3 +1,28 @@
+// This is free and unencumbered software released into the public domain.
+// 
+// Anyone is free to copy, modify, publish, use, compile, sell, or
+// distribute this software, either in source code form or as a compiled
+// binary, for any purpose, commercial or non-commercial, and by any
+// means.
+// 
+// In jurisdictions that recognize copyright laws, the author or authors
+// of this software dedicate any and all copyright interest in the
+// software to the public domain. We make this dedication for the benefit
+// of the public at large and to the detriment of our heirs and
+// successors. We intend this dedication to be an overt act of
+// relinquishment in perpetuity of all present and future rights to this
+// software under copyright law.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+// IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+// 
+// For more information, please refer to <http://unlicense.org>
+
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -8,8 +33,57 @@
 
 #include "cxxopts.hpp"
 
+constexpr auto cxxoptsLicense = 1 + R"STR(
+Copyright (c) 2014, 2015, 2016 Jarryd Beck
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+)STR";
+
+constexpr auto unilicense = 1 + R"STR(
+This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to <http://unlicense.org>
+)STR";
+
 //beginning of the file to output
-constexpr auto fileTemplate = 1 + R"SRC(
+constexpr auto fileTemplate = 1 + R"STR(
 #ifndef BINARY_%i_HEADER_INCLUDE
 #define BINARY_%i_HEADER_INCLUDE
 
@@ -26,7 +100,7 @@ constexpr auto fileTemplate = 1 + R"SRC(
 	%d
 };
 
-#endif //header guard)SRC";
+#endif //header guard)STR";
 
 void replace(std::string& str, const std::string& from, const std::string& to) 
 {
@@ -163,12 +237,26 @@ int main(int argc, char** argv)
 				"file size is not multiple.", cxxopts::value<unsigned int>(size))
 			("n,name", "the name of the array in the c header. Defaulted to 'binaryData'", 
 				cxxopts::value<std::string>(name))
+			("l,license", "outputs the license of this software and used software")
 			("h,help", "Print this help string");
 
 		options.parse(argc, argv);
 		if(options.count("help"))
 		{
 			std::cerr << options.help({""}) << "\n";
+			return EXIT_SUCCESS;
+		}
+
+		if(options.count("license"))
+		{
+			std::cerr << "\n";
+			std::cerr << "The License of the bintoheader itself:\n";
+			std::cerr << "======================================\n\n";
+			std::cerr << unilicense << "\n\n";
+
+			std::cerr << "The License of cxxopts, used to parse arguments:\n";
+			std::cerr << "================================================\n\n";
+			std::cerr << cxxoptsLicense << "\n";
 			return EXIT_SUCCESS;
 		}
 		
