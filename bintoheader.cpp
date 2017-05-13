@@ -258,7 +258,6 @@ int main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 
-		std::cout << options.count("output") << "\n";
 		if(options.count("output") == 0) output = input + ".h";
 		replace(name, ".", "_");
 	} 
