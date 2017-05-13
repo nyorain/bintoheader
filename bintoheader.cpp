@@ -116,20 +116,6 @@ void replace(std::string& str, const std::string& from, const std::string& to)
 //how many chars should be in one line (excluding beginning tab).
 constexpr auto lineLength = 80;
 
-std::string parseFileName(const std::string& name)
-{
-	auto pos1 = name.find_last_of('\\');
-	auto pos2 = name.find_last_of('/');
-
-	if(pos1 == std::string::npos) pos1 = 0;
-	else ++pos1;
-	if(pos2 == std::string::npos) pos2 = 0;
-	else ++pos2;
-
-	auto ret = name.substr(std::max(pos1, pos2)); 
-	return ret;
-}
-
 std::vector<std::uint8_t> loadFile(const std::string& file)
 {
 	auto openmode = std::ios::ate | std::ios::binary;
@@ -160,7 +146,7 @@ std::vector<std::uint8_t> loadFile(const std::string& file)
 void outputData(const std::vector<std::uint8_t>& data, const std::string& file, 
 	const std::string& name, int size)
 {
-	auto fname = parseFileName(file);
+	auto fname = file;
 	std::ofstream ofs(fname);
 	if(!ofs.is_open()) 
 	{
@@ -272,7 +258,8 @@ int main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 
-		if(!options.count("output")) output = input + ".h";
+		std::cout << options.count("output") << "\n";
+		if(options.count("output") == 0) output = input + ".h";
 		replace(name, ".", "_");
 	} 
 	catch(const cxxopts::OptionException& e)
