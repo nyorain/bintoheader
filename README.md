@@ -14,7 +14,7 @@ Note that getting it to compile with clang might require some extra include and 
 
 ## Usage:
 
-``````````````````````````````
+```
   bintoheader [OPTION...]
 
   -i, --input arg   the input file. Can be any type of file, binary as well
@@ -26,7 +26,7 @@ Note that getting it to compile with clang might require some extra include and 
   -n, --name arg    the name of the array in the c header. Defaulted to
                     'binaryData'
   -h, --help        Print this help string
-````````````````````````````
+```
 
 This will convert the input file into the valid C header specified by the output argument that 
 contains an array with the raw data of the input file.
