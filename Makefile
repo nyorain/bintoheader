@@ -2,7 +2,7 @@ CXX=g++
 PREFIX=/usr
 
 bintoheader: bintoheader.cpp
-	$(CXX) bintoheader.cpp -o bintoheader
+	$(CXX) -std=c++1z bintoheader.cpp -o bintoheader
 
 #.PHONY: install
 install: bintoheader

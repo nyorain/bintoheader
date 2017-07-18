@@ -62,6 +62,13 @@ void replace(std::string& str, const std::string& from, const std::string& to)
     }
 }
 
+void stripPath(std::string& str)
+{
+	auto last = str.find_last_of("/");
+	if(last != str.npos)
+		str.erase(0, last + 1);
+}
+
 //how many chars should be in one line (excluding beginning tab).
 constexpr auto lineLength = 80;
 
@@ -162,7 +169,7 @@ int main(int argc, char** argv)
 		std::cout << "\t-i\tThe input file\n";
 		std::cout << "\t-o\tThe output file [defaulted to '<input>.h']\n";
 		std::cout << "\t-name\tThe name of the c array\n";
-		std::cout << "\t\tDefaulted to '<input>.h', with all '.' replaced by '.'\n";
+		std::cout << "\t\tDefaulted to '<input>.h' with path stripped all '.' replaced by '.'\n";
 		std::cout << "\t-size\tThe size of the array values in bits. Defaulted to 8.\n";
 		std::cout << "\t\tThe file size must be a multiple of the size value\n";
 		std::cout << "\t-help\tShow this error message\n\n";
@@ -191,7 +198,13 @@ int main(int argc, char** argv)
 	auto name = args.get<std::string>("name", {});
 	if(name.empty()) {
 		name = input + "_data";
+		stripPath(name);
 		replace(name, ".", "_");
+	}
+
+	if(name.empty()) {
+		std::cout << "Empty array name is invalid!\n";
+		return 1;
 	}
 
 	auto size = args.get<unsigned int>("size", 8);
