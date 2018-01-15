@@ -119,7 +119,7 @@ void outputData(const std::vector<std::uint8_t>& data, const std::string& file,
 	std::string dataString;
 	dataString.reserve(data.size() * 5); //approx.
 
-	auto currColSize = 0u;
+	auto currColSize = 4u;
 	for(auto i = 0u; i < data.size() / byteSize; ++i) {
 		std::uint64_t value = 0;
 		auto ptr = &data[i * byteSize];
@@ -130,12 +130,17 @@ void outputData(const std::vector<std::uint8_t>& data, const std::string& file,
 		else if(size == 64) value = *reinterpret_cast<const std::uint64_t*>(ptr);
 
 		auto str = std::to_string(value);
-		if(i < data.size() / byteSize - 1) str += ", "; //check if last value or not
-		if(currColSize + str.size() > lineLength)
+		if(currColSize + str.size() + 2 >= lineLength)
 		{
-			dataString.append("\n\t");
-			currColSize = 0;
+			dataString.append(",\n    ");
+			currColSize = 4u;
 		}
+		else if(i != 0)
+		{
+			dataString.append(", ");
+			currColSize += 2;
+		}
+
 		currColSize += str.size();
 		dataString.append(str);
 	}
@@ -194,6 +199,18 @@ int main(int argc, char** argv)
 	if(output.empty())
 		output = input + ".h";
 
+	if(input.empty()) {
+		std::cout << "Must give a valid input file\n";
+		std::cout << "Use -h for help\n";
+		return 2;
+	}
+
+	if(output.empty()) {
+		std::cout << "Invalid output file name\n";
+		std::cout << "Use -h for help\n";
+		return 3;
+	}
+
 	// name, size
 	auto name = args.get<std::string>("name", {});
 	if(name.empty()) {
@@ -204,14 +221,16 @@ int main(int argc, char** argv)
 
 	if(name.empty()) {
 		std::cout << "Empty array name is invalid!\n";
-		return 1;
+		std::cout << "Use -h for help\n";
+		return 4;
 	}
 
 	auto size = args.get<unsigned int>("size", 8);
 	if(size != 8 && size != 16 && size != 32 && size != 64) {
 		std::cout << "Invalid size parameter\n";
 		std::cout << "Must be one of {8, 16, 32, 64}\n";
-		return 1;
+		std::cout << "Use -h for help\n";
+		return 5;
 	}
 
 	auto data = loadFile(input);
